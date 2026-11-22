@@ -17,11 +17,11 @@ function App() {
 
   // 1. Controlla se l'utente è loggato
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: any) => {
       setUser(session?.user ?? null)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setUser(session?.user ?? null)
     })
 
@@ -32,7 +32,7 @@ function App() {
   useEffect(() => {
     if (user) {
       // Controlla se ha già una zona (profilo completo)
-      supabase.from('profili').select('*').eq('id', user.id).single().then(({ data }) => {
+      supabase.from('profili').select('*').eq('id', user.id).single().then(({ data }: any) => {
         if (data && data.zona_id) {
           setProfiloCompleto(true)
           setZonaScelta(data.zona_id)
@@ -43,14 +43,13 @@ function App() {
       })
       
       // Carica la lista delle zone per il menu
-      supabase.from('zone').select('*').then(({ data }) => {
+      supabase.from('zone').select('*').then(({ data }: any) => {
         if (data) {
           setZone(data)
         }
       })
     }
   }, [user])
-
   const handleSignUp = async () => {
     const { error } = await supabase.auth.signUp({ email, password })
     if (error) setMsg('Errore: ' + error.message)
