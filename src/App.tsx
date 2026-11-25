@@ -12,6 +12,7 @@ function App() {
   const [confermaPassword, setConfermaPassword] = useState('')
   const [profiloCompleto, setProfiloCompleto] = useState(false)
   const [nome, setNome] = useState('')
+  const [uploading, setUploading] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState('')
   const [livello, setLivello] = useState('principiante')
   const [ritmo, setRitmo] = useState('6:00-6:30')
@@ -200,8 +201,32 @@ function App() {
         return <Bacheca utente={user} zonaId={zonaScelta} onLogout={handleLogout} />
   }
 
-  // --- SEZIONE 3: Altrimenti mostra l'Onboarding ---
-     // --- SEZIONE 3: Onboarding (Profilo) ---
+  
+       // Funzione per caricare la foto profilo durante l'onboarding
+  const caricaFotoOnboarding = async (e: any) => {
+    try {
+      setUploading(true)
+      if (!e.target.files || e.target.files.length === 0) return
+      
+      const file = e.target.files[0]
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${user.id}-${Math.random()}.${fileExt}`
+
+      // Carica nel bucket 'avatars'
+      let { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, file)
+      if (uploadError) throw uploadError
+
+      // Prendi il link pubblico e salvalo nello stato
+      const { data } = supabase.storage.from('avatars').getPublicUrl(fileName)
+      setAvatarUrl(data.publicUrl)
+      setMsg('Foto caricata! Ora puoi salvare il profilo.')
+    } catch (error: any) {
+      setMsg('Errore caricamento: ' + error.message)
+    } finally {
+      setUploading(false)
+    }
+  }
+    // --- SEZIONE 3: Onboarding (Profilo) ---
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f4f7f6', fontFamily: 'Montserrat, sans-serif' }} className="d-flex justify-content-center align-items-center py-5">
       <div className="card border-0 shadow-lg p-5" style={{ width: '550px', borderRadius: '20px' }}>
@@ -209,6 +234,7 @@ function App() {
         <h2 className="text-center fw-bold mb-1">Il tuo Profilo Runner</h2>
         <p className="text-center text-muted mb-4">Raccontaci chi sei</p>
 
+        {/* FOTO PROFILO CON PULSANTE + */}
         <div className="d-flex flex-column align-items-center mb-4">
           <div className="position-relative">
             <img 
@@ -217,17 +243,24 @@ function App() {
               className="rounded-circle shadow-sm bg-light" 
               style={{ width: '120px', height: '120px', objectFit: 'cover', border: '4px solid white' }} 
             />
-          </div>
-          <div className="mt-3 w-100">
-            <label className="form-label fw-bold small text-uppercase text-muted">Link Foto Profilo (opzionale)</label>
+            <label 
+              htmlFor="upload-onboarding" 
+              className="position-absolute bottom-0 end-0 text-white rounded-circle d-flex align-items-center justify-content-center shadow" 
+              style={{ width: '40px', height: '40px', cursor: 'pointer', backgroundColor: '#ff5722', border: '3px solid white', fontSize: '24px', fontWeight: 'bold' }}
+            >
+              {uploading ? '...' : '+'}
+            </label>
             <input 
-              type="text" 
-              className="form-control bg-light border-0" 
-              placeholder="Incolla un link a un'immagine..." 
-              value={avatarUrl} 
-              onChange={e => setAvatarUrl(e.target.value)} 
+              id="upload-onboarding" 
+              type="file" 
+              accept="image/*" 
+              onChange={caricaFotoOnboarding} 
+              style={{ display: 'none' }} 
             />
           </div>
+          <span className="text-muted small mt-2 fw-semibold" style={{ cursor: 'pointer' }}>
+            <label htmlFor="upload-onboarding" style={{ cursor: 'pointer' }}>Aggiungi foto</label>
+          </span>
         </div>
 
         <div className="row g-3">
