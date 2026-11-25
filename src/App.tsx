@@ -59,8 +59,33 @@ function App() {
   }
 
   const handleLogin = async () => {
+    setMsg('') // Pulisce i messaggi vecchi
+    if (!email || !password) return setMsg('Inserisci email e password')
+
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) setMsg('Errore: ' + error.message)
+    
+    if (error) {
+      if (error.message.includes('Invalid login credentials')) {
+        // Qui gestiamo il caso in cui l'utente non esiste o la password è sbagliata
+        setMsg('Credenziali errate. Se è il tuo primo accesso, clicca su "Registrati". Altrimenti, clicca su "Password dimenticata?".')
+      } else {
+        setMsg('Errore: ' + error.message)
+      }
+    }
+  }
+    const handleResetPassword = async () => {
+    if (!email) return setMsg('Inserisci la tua email per recuperare la password')
+    
+    setMsg('Invio email in corso...')
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://www.runnersocial.it', // O il tuo link di Vercel
+    })
+
+    if (error) {
+      setMsg('Errore: ' + error.message)
+    } else {
+      setMsg('Ti abbiamo inviato un link per reimpostare la password. Controlla la posta!')
+    }
   }
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -88,6 +113,7 @@ function App() {
   }
 
     // --- SEZIONE 1: Login / Registrazione ---
+  // --- SEZIONE 1: Login / Registrazione ---
   if (!user) {
     return (
       <div style={{ 
@@ -119,7 +145,14 @@ function App() {
               Accedi
             </button>
             <button onClick={handleSignUp} className="btn btn-lg btn-outline-dark fw-bold" style={{ borderRadius: '10px' }}>
-              Crea un account
+              Crea un account (Registrati)
+            </button>
+          </div>
+
+          {/* Link per password dimenticata */}
+          <div className="text-center mt-3">
+            <button onClick={handleResetPassword} className="btn btn-link text-muted small text-decoration-none">
+              Password dimenticata?
             </button>
           </div>
           
@@ -128,7 +161,6 @@ function App() {
       </div>
     )
   }
-
   // --- SEZIONE 2: Se il profilo è completo, mostra la Bacheca ---
   if (profiloCompleto) {
         return <Bacheca utente={user} zonaId={zonaScelta} onLogout={handleLogout} />
