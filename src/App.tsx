@@ -10,6 +10,7 @@ function App() {
   
   const [profiloCompleto, setProfiloCompleto] = useState(false)
   const [nome, setNome] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState('')
   const [livello, setLivello] = useState('principiante')
   const [ritmo, setRitmo] = useState('6:00-6:30')
   const [zone, setZone] = useState<any[]>([])
@@ -39,6 +40,7 @@ function App() {
           if (data.nome) setNome(data.nome)
           if (data.livello) setLivello(data.livello)
           if (data.fascia_ritmo) setRitmo(data.fascia_ritmo)
+            if (data.avatar_url) setAvatarUrl(data.avatar_url)
         }
       })
       
@@ -73,8 +75,9 @@ function App() {
     
     const { error } = await supabase
       .from('profili')
-      .update({ nome: nome, livello: livello, fascia_ritmo: ritmo, zona_id: zonaScelta })
+      .update({ nome: nome, livello: livello, fascia_ritmo: ritmo, zona_id: zonaScelta, avatar_url: avatarUrl })
       .eq('id', user.id)
+      
 
     if (error) {
       setMsg('Errore salvataggio: ' + error.message)
@@ -84,26 +87,44 @@ function App() {
     }
   }
 
-  // --- SEZIONE 1: Login / Registrazione ---
+    // --- SEZIONE 1: Login / Registrazione ---
   if (!user) {
     return (
-      <div style={{ padding: '50px', fontFamily: 'sans-serif', maxWidth: '400px', margin: '0 auto' }}>
-        <h1>Accedi a RunnerSocial</h1>
-        <input 
-          type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} 
-          style={{ display: 'block', marginBottom: '10px', padding: '8px', width: '100%', boxSizing: 'border-box' }}
-        />
-        <input 
-          type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} 
-          style={{ display: 'block', marginBottom: '10px', padding: '8px', width: '100%', boxSizing: 'border-box' }}
-        />
-        <button onClick={handleLogin} style={{ padding: '10px', width: '100%', marginBottom: '10px', backgroundColor: '#007bff', color: 'white', border: 'none', cursor: 'pointer' }}>
-          Accedi
-        </button>
-        <button onClick={handleSignUp} style={{ padding: '10px', width: '100%', backgroundColor: '#eee', border: 'none', cursor: 'pointer' }}>
-          Registrati
-        </button>
-        {msg && <p style={{ color: 'blue', textAlign: 'center' }}>{msg}</p>}
+      <div style={{ 
+        minHeight: '100vh', 
+        backgroundImage: 'url(https://images.unsplash.com/photo-1552674605-db6ffd4facb5?q=80&w=2070&auto=format&fit=crop)', 
+        backgroundSize: 'cover', 
+        backgroundPosition: 'center',
+        fontFamily: 'Montserrat, sans-serif'
+      }} className="d-flex justify-content-center align-items-center">
+        
+        <div className="card border-0 shadow-lg p-5" style={{ width: '420px', borderRadius: '20px', backgroundColor: 'rgba(255, 255, 255, 0.95)' }}>
+          <div className="text-center mb-4">
+            <h1 className="fw-bold" style={{ color: '#1a1a1a' }}>RunnerSocial</h1>
+            <p className="text-muted fw-semibold">Trova il tuo ritmo. Trova la tua crew.</p>
+          </div>
+          
+          <div className="mb-4">
+            <label className="form-label fw-bold small text-uppercase text-muted">Email</label>
+            <input type="email" className="form-control form-control-lg bg-light border-0" value={email} onChange={e => setEmail(e.target.value)} />
+          </div>
+          
+          <div className="mb-4">
+            <label className="form-label fw-bold small text-uppercase text-muted">Password</label>
+            <input type="password" className="form-control form-control-lg bg-light border-0" value={password} onChange={e => setPassword(e.target.value)} />
+          </div>
+          
+          <div className="d-grid gap-3 mt-4">
+            <button onClick={handleLogin} className="btn btn-lg text-white fw-bold" style={{ backgroundColor: '#ff5722', borderRadius: '10px' }}>
+              Accedi
+            </button>
+            <button onClick={handleSignUp} className="btn btn-lg btn-outline-dark fw-bold" style={{ borderRadius: '10px' }}>
+              Crea un account
+            </button>
+          </div>
+          
+          {msg && <p className="text-center text-danger mt-3 fw-bold">{msg}</p>}
+        </div>
       </div>
     )
   }
@@ -114,55 +135,79 @@ function App() {
   }
 
   // --- SEZIONE 3: Altrimenti mostra l'Onboarding ---
+     // --- SEZIONE 3: Onboarding (Profilo) ---
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '400px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '24px', marginBottom: '10px' }}>Completa il tuo profilo</h1>
-      <p style={{ color: '#666', marginBottom: '20px' }}>Aiutaci a trovarti i compagni di corsa giusti.</p>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f4f7f6', fontFamily: 'Montserrat, sans-serif' }} className="d-flex justify-content-center align-items-center py-5">
+      <div className="card border-0 shadow-lg p-5" style={{ width: '550px', borderRadius: '20px' }}>
+        
+        <h2 className="text-center fw-bold mb-1">Il tuo Profilo Runner</h2>
+        <p className="text-center text-muted mb-4">Raccontaci chi sei</p>
 
-      <div style={{ marginBottom: '15px' }}>
-        <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Come ti chiami?</label>
-        <input 
-          type="text" placeholder="Il tuo nome" value={nome} onChange={e => setNome(e.target.value)}
-          style={{ width: '100%', padding: '10px', boxSizing: 'border-box', border: '1px solid #ccc', borderRadius: '4px' }}
-        />
+        <div className="d-flex flex-column align-items-center mb-4">
+          <div className="position-relative">
+            <img 
+              src={avatarUrl || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'} 
+              alt="Avatar" 
+              className="rounded-circle shadow-sm bg-light" 
+              style={{ width: '120px', height: '120px', objectFit: 'cover', border: '4px solid white' }} 
+            />
+          </div>
+          <div className="mt-3 w-100">
+            <label className="form-label fw-bold small text-uppercase text-muted">Link Foto Profilo (opzionale)</label>
+            <input 
+              type="text" 
+              className="form-control bg-light border-0" 
+              placeholder="Incolla un link a un'immagine..." 
+              value={avatarUrl} 
+              onChange={e => setAvatarUrl(e.target.value)} 
+            />
+          </div>
+        </div>
+
+        <div className="row g-3">
+          <div className="col-12">
+            <label className="form-label fw-bold small text-uppercase text-muted">Come ti chiami?</label>
+            <input type="text" className="form-control form-control-lg bg-light border-0" placeholder="Il tuo nome" value={nome} onChange={e => setNome(e.target.value)} />
+          </div>
+
+          <div className="col-md-6">
+            <label className="form-label fw-bold small text-uppercase text-muted">Livello</label>
+            <select className="form-select form-select-lg bg-light border-0" value={livello} onChange={e => setLivello(e.target.value)}>
+              <option value="principiante">Principiante</option>
+              <option value="intermedio">Intermedio</option>
+              <option value="avanzato">Avanzato</option>
+            </select>
+          </div>
+
+          <div className="col-md-6">
+            <label className="form-label fw-bold small text-uppercase text-muted">Ritmo (al km)</label>
+            <select className="form-select form-select-lg bg-light border-0" value={ritmo} onChange={e => setRitmo(e.target.value)}>
+              <option value="7:00+">Più lento di 7:00</option>
+              <option value="6:30-7:00">6:30 - 7:00</option>
+              <option value="6:00-6:30">6:00 - 6:30</option>
+              <option value="5:30-6:00">5:30 - 6:00</option>
+              <option value="5:00-5:30">5:00 - 5:30</option>
+              <option value="aperto">Aperto a tutti</option>
+            </select>
+          </div>
+
+          <div className="col-12 mb-4">
+            <label className="form-label fw-bold small text-uppercase text-muted">La tua zona</label>
+            <select className="form-select form-select-lg bg-light border-0" value={zonaScelta} onChange={e => setZonaScelta(e.target.value)}>
+              <option value="">Seleziona la tua città/zona...</option>
+              {zone.map(z => (
+                <option key={z.id} value={z.id}>{z.nome}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <button onClick={salvaProfilo} className="btn btn-lg w-100 text-white fw-bold shadow-sm" style={{ backgroundColor: '#ff5722', borderRadius: '10px' }}>
+          Inizia a Correre
+        </button>
+
+        {msg && <p className="text-center text-danger mt-3 fw-bold">{msg}</p>}
       </div>
-
-      <div style={{ marginBottom: '15px' }}>
-        <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Il tuo livello:</label>
-        <select value={livello} onChange={e => setLivello(e.target.value)} style={{ width: '100%', padding: '10px', boxSizing: 'border-box', border: '1px solid #ccc', borderRadius: '4px' }}>
-          <option value="principiante">Principiante</option>
-          <option value="intermedio">Intermedio</option>
-          <option value="avanzato">Avanzato</option>
-        </select>
-      </div>
-
-      <div style={{ marginBottom: '15px' }}>
-        <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>La tua fascia di ritmo:</label>
-        <select value={ritmo} onChange={e => setRitmo(e.target.value)} style={{ width: '100%', padding: '10px', boxSizing: 'border-box', border: '1px solid #ccc', borderRadius: '4px' }}>
-          <option value="7:00+">Più lento di 7:00</option>
-          <option value="6:30-7:00">6:30 - 7:00</option>
-          <option value="6:00-6:30">6:00 - 6:30</option>
-          <option value="5:30-6:00">5:30 - 6:00</option>
-          <option value="5:00-5:30">5:00 - 5:30</option>
-          <option value="aperto">Aperto a tutti i ritmi</option>
-        </select>
-      </div>
-
-      <div style={{ marginBottom: '25px' }}>
-        <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>La tua zona principale:</label>
-        <select value={zonaScelta} onChange={e => setZonaScelta(e.target.value)} style={{ width: '100%', padding: '10px', boxSizing: 'border-box', border: '1px solid #ccc', borderRadius: '4px' }}>
-          <option value="">Seleziona una zona...</option>
-          {zone.map(z => (
-            <option key={z.id} value={z.id}>{z.nome}</option>
-          ))}
-        </select>
-      </div>
-
-      <button onClick={salvaProfilo} style={{ width: '100%', padding: '12px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '16px' }}>
-        Salva Profilo e Inizia
-      </button>
-
-      {msg && <p style={{ marginTop: '20px', color: msg.includes('Errore') ? 'red' : 'green', textAlign: 'center' }}>{msg}</p>}
     </div>
   )
 }
