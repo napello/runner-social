@@ -189,7 +189,7 @@ export default function Bacheca({ utente, zonaId, onLogout }: { utente: any, zon
     )
   }
 
-  // --- VISTA PROFILO ---
+  // --- VISTA PROFILO ---  // --- VISTA PROFILO (Modificabile) ---
   if (mostraProfilo) {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: '#f4f7f6', fontFamily: 'Montserrat, sans-serif' }}>
@@ -201,15 +201,64 @@ export default function Bacheca({ utente, zonaId, onLogout }: { utente: any, zon
             <span className="navbar-brand mb-0 h1 fs-6">Il mio Profilo</span>
           </div>
         </nav>
-        <div className="container text-center mt-5">
-          <img 
-            src={avatarUrl || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'} 
-            className="rounded-circle shadow mb-3" 
-            style={{ width: '150px', height: '150px', objectFit: 'cover', border: '4px solid white' }} 
-          />
-          <h2 className="fw-bold">{nomeUtente}</h2>
-          <p className="text-muted">Runner ufficiale</p>
-          <button onClick={onLogout} className="btn btn-danger mt-3">Disconnetti</button>
+
+        <div className="container" style={{ maxWidth: '600px' }}>
+          <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '15px' }}>
+            <h4 className="fw-bold mb-4 text-center">Modifica i tuoi dati</h4>
+
+            {/* Avatar */}
+            <div className="text-center mb-4">
+              <img 
+                src={avatarUrl || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'} 
+                className="rounded-circle shadow mb-3" 
+                style={{ width: '120px', height: '120px', objectFit: 'cover', border: '4px solid white' }} 
+              />
+              <label className="form-label fw-bold small text-uppercase text-muted d-block">Link Foto Profilo</label>
+              <input 
+                type="text" 
+                className="form-control bg-light border-0" 
+                placeholder="https://..." 
+                value={avatarUrl} 
+                onChange={e => setAvatarUrl(e.target.value)} 
+              />
+            </div>
+
+            {/* Nome */}
+            <div className="mb-3">
+              <label className="form-label fw-bold small text-uppercase text-muted">Il tuo nome</label>
+              <input 
+                type="text" 
+                className="form-control bg-light border-0" 
+                value={nomeUtente} 
+                onChange={e => setNomeUtente(e.target.value)} 
+              />
+            </div>
+
+            <button 
+              onClick={async () => {
+                const { error } = await supabase
+                  .from('profili')
+                  .update({ nome: nomeUtente, avatar_url: avatarUrl })
+                  .eq('id', utente.id)
+
+                if (error) mostraToast('Errore: ' + error.message, 'error')
+                else {
+                  mostraToast('Profilo aggiornato con successo!')
+                  setMostraProfilo(false) // Torna alla bacheca
+                }
+              }} 
+              className="btn text-white fw-bold w-100 mb-4" 
+              style={{ backgroundColor: '#ff5722', borderRadius: '10px' }}
+            >
+              Salva Modifiche
+            </button>
+
+            <hr />
+
+            <button onClick={onLogout} className="btn btn-outline-danger w-100 mt-2">
+              Disconnetti
+            </button>
+          </div>
         </div>
       </div>
     )
