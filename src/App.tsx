@@ -8,6 +8,8 @@ function App() {
   const [msg, setMsg] = useState('')
   const [user, setUser] = useState<any>(null)
   
+  const [isRegistrazione, setIsRegistrazione] = useState(false)
+  const [confermaPassword, setConfermaPassword] = useState('')
   const [profiloCompleto, setProfiloCompleto] = useState(false)
   const [nome, setNome] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
@@ -53,11 +55,21 @@ function App() {
     }
   }, [user])
   const handleSignUp = async () => {
-    const { error } = await supabase.auth.signUp({ email, password })
-    if (error) setMsg('Errore: ' + error.message)
-    else setMsg('Registrato! Ora fai il login.')
-  }
+    setMsg('')
+    if (!email || !password) return setMsg('Inserisci email e password')
+    if (password !== confermaPassword) return setMsg('Le password non coincidono!')
+    if (password.length < 6) return setMsg('La password deve avere almeno 6 caratteri')
 
+    const { error } = await supabase.auth.signUp({ email, password })
+    if (error) {
+      setMsg('Errore: ' + error.message)
+    } else {
+      setMsg('Registrato! Ora puoi accedere.')
+      setIsRegistrazione(false) // Torna alla modalità login
+      setPassword('')
+      setConfermaPassword('')
+    }
+  }
   const handleLogin = async () => {
     setMsg('') // Pulisce i messaggi vecchi
     if (!email || !password) return setMsg('Inserisci email e password')
@@ -112,7 +124,6 @@ function App() {
     }
   }
 
-    // --- SEZIONE 1: Login / Registrazione ---
   // --- SEZIONE 1: Login / Registrazione ---
   if (!user) {
     return (
@@ -127,7 +138,9 @@ function App() {
         <div className="card border-0 shadow-lg p-5" style={{ width: '420px', borderRadius: '20px', backgroundColor: 'rgba(255, 255, 255, 0.95)' }}>
           <div className="text-center mb-4">
             <h1 className="fw-bold" style={{ color: '#1a1a1a' }}>RunnerSocial</h1>
-            <p className="text-muted fw-semibold">Trova il tuo ritmo. Trova la tua crew.</p>
+            <p className="text-muted fw-semibold">
+              {isRegistrazione ? 'Crea il tuo account' : 'Trova il tuo ritmo. Trova la tua crew.'}
+            </p>
           </div>
           
           <div className="mb-4">
@@ -139,21 +152,42 @@ function App() {
             <label className="form-label fw-bold small text-uppercase text-muted">Password</label>
             <input type="password" className="form-control form-control-lg bg-light border-0" value={password} onChange={e => setPassword(e.target.value)} />
           </div>
+
+          {/* CAMPO CONFERMA PASSWORD (visibile solo in registrazione) */}
+          {isRegistrazione && (
+            <div className="mb-4">
+              <label className="form-label fw-bold small text-uppercase text-muted">Conferma Password</label>
+              <input type="password" className="form-control form-control-lg bg-light border-0" value={confermaPassword} onChange={e => setConfermaPassword(e.target.value)} />
+            </div>
+          )}
           
           <div className="d-grid gap-3 mt-4">
-            <button onClick={handleLogin} className="btn btn-lg text-white fw-bold" style={{ backgroundColor: '#ff5722', borderRadius: '10px' }}>
-              Accedi
-            </button>
-            <button onClick={handleSignUp} className="btn btn-lg btn-outline-dark fw-bold" style={{ borderRadius: '10px' }}>
-              Crea un account (Registrati)
-            </button>
-          </div>
-
-          {/* Link per password dimenticata */}
-          <div className="text-center mt-3">
-            <button onClick={handleResetPassword} className="btn btn-link text-muted small text-decoration-none">
-              Password dimenticata?
-            </button>
+            {isRegistrazione ? (
+              // Pulsanti in modalità REGISTRAZIONE
+              <>
+                <button onClick={handleSignUp} className="btn btn-lg text-white fw-bold" style={{ backgroundColor: '#ff5722', borderRadius: '10px' }}>
+                  Registrati
+                </button>
+                <button onClick={() => { setIsRegistrazione(false); setMsg(''); setPassword(''); setConfermaPassword('') }} className="btn btn-lg btn-outline-dark fw-bold" style={{ borderRadius: '10px' }}>
+                  Torna al Login
+                </button>
+              </>
+            ) : (
+              // Pulsanti in modalità LOGIN
+              <>
+                <button onClick={handleLogin} className="btn btn-lg text-white fw-bold" style={{ backgroundColor: '#ff5722', borderRadius: '10px' }}>
+                  Accedi
+                </button>
+                <button onClick={() => { setIsRegistrazione(true); setMsg('') }} className="btn btn-lg btn-outline-dark fw-bold" style={{ borderRadius: '10px' }}>
+                  Crea un account
+                </button>
+                <div className="text-center mt-2">
+                  <button onClick={handleResetPassword} className="btn btn-link text-muted small text-decoration-none">
+                    Password dimenticata?
+                  </button>
+                </div>
+              </>
+            )}
           </div>
           
           {msg && <p className="text-center text-danger mt-3 fw-bold">{msg}</p>}
@@ -161,7 +195,7 @@ function App() {
       </div>
     )
   }
-  // --- SEZIONE 2: Se il profilo è completo, mostra la Bacheca ---
+    // --- SEZIONE 2: Se il profilo è completo, mostra la Bacheca ---
   if (profiloCompleto) {
         return <Bacheca utente={user} zonaId={zonaScelta} onLogout={handleLogout} />
   }
