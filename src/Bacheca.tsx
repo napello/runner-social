@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 
 export default function Bacheca({ utente, zonaId, onLogout }: { utente: any, zonaId: string, onLogout: () => void }) {
-  // Stati Bacheca
+  
+  const [uploadingStoria, setUploadingStoria] = useState(false)
+  
+    // Stati Bacheca
   const [uscite, setUscite] = useState<any[]>([])
   const [titolo, setTitolo] = useState('')
   const [descrizione, setDescrizione] = useState('')
@@ -142,7 +145,43 @@ export default function Bacheca({ utente, zonaId, onLogout }: { utente: any, zon
       setUploading(false)
     }
   }
+  // Funzione per caricare una storia
+  const caricaStoria = async (e: any) => {
+    try {
+      setUploadingStoria(true)
+      if (!e.target.files || e.target.files.length === 0) return
+      
+      const file = e.target.files[0]
+      const fileExt = file.name.split('.').pop()
+      const fileName = `storia-${utente.id}-${Math.random()}.${fileExt}`
+      
+      // Determina se è foto o video
+      const tipo = file.type.startsWith('video') ? 'video' : 'foto'
 
+      // Carica nel bucket 'storie'
+      let { error: uploadError } = await supabase.storage.from('storie').upload(fileName, file)
+      if (uploadError) throw uploadError
+
+      // Prendi il link pubblico
+      const { data } = supabase.storage.from('storie').getPublicUrl(fileName)
+
+      // Salva nel database
+      const { error: dbError } = await supabase.from('storie').insert({
+        utente_id: utente.id,
+        media_url: data.publicUrl,
+        tipo: tipo
+      })
+
+      if (dbError) throw dbError
+      
+      mostraToast('Storia pubblicata con successo!')
+      
+    } catch (error: any) {
+      mostraToast('Errore caricamento storia: ' + error.message, 'error')
+    } finally {
+      setUploadingStoria(false)
+    }
+  }
   // --- VISTA CHAT ---
   if (uscitaSelezionata) {
     return (
@@ -250,12 +289,15 @@ export default function Bacheca({ utente, zonaId, onLogout }: { utente: any, zon
   // --- VISTA BACHECA ---
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f4f7f6', fontFamily: 'Montserrat, sans-serif' }}>
+      
+      {/* Toast di notifica */}
       {toast && (
         <div className={`position-fixed top-0 end-0 m-4 p-3 rounded shadow text-white fw-bold ${toast.type === 'success' ? 'bg-success' : 'bg-danger'}`} style={{ zIndex: 1050 }}>
           {toast.msg}
         </div>
       )}
 
+      {/* Navbar */}
       <nav className="navbar navbar-dark shadow-sm mb-0" style={{ backgroundColor: '#1a1a1a' }}>
         <div className="container">
           <span className="navbar-brand fw-bold mb-0 h1">RunnerSocial</span>
@@ -266,19 +308,40 @@ export default function Bacheca({ utente, zonaId, onLogout }: { utente: any, zon
         </div>
       </nav>
 
+      {/* BARRA DELLE STORIE */}
       <div className="bg-white shadow-sm py-3 mb-4" style={{ overflowX: 'auto', whiteSpace: 'nowrap' }}>
-        <div className="container d-flex gap-3">
+        <div className="container d-flex gap-3 align-items-start">
+          
+          {/* Pulsante Aggiungi Storia (+) */}
+          <div className="text-center" style={{ cursor: 'pointer', minWidth: '65px' }}>
+            <label htmlFor="upload-storia" style={{ cursor: 'pointer', margin: 0, display: 'block' }}>
+              <div style={{ 
+                width: '60px', height: '60px', borderRadius: '50%', 
+                backgroundColor: '#f0f0f0', border: '2px dashed #ccc',
+                display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '0 auto'
+              }}>
+                <span style={{ fontSize: '24px', color: '#ff5722', fontWeight: 'bold' }}>
+                  {uploadingStoria ? '...' : '+'}
+                </span>
+              </div>
+            </label>
+            <input id="upload-storia" type="file" accept="image/*,video/*" onChange={caricaStoria} style={{ display: 'none' }} />
+            <span className="text-muted d-block mt-1" style={{ fontSize: '11px' }}>La tua storia</span>
+          </div>
+
+          {/* Storie degli altri runner */}
           {runnerZona.map((r) => (
-            <div key={r.id} className="text-center" style={{ cursor: 'pointer' }} onClick={() => setRunnerSelezionato(r)}>
-              <div style={{ width: '60px', height: '60px', borderRadius: '50%', padding: '3px', background: 'linear-gradient(45deg, #ff5722, #ff9800)' }}>
+            <div key={r.id} className="text-center" style={{ cursor: 'pointer', minWidth: '65px' }} onClick={() => setRunnerSelezionato(r)}>
+              <div style={{ width: '60px', height: '60px', borderRadius: '50%', padding: '3px', background: 'linear-gradient(45deg, #ff5722, #ff9800)', margin: '0 auto' }}>
                 <img src={r.avatar_url || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '2px solid white' }} />
               </div>
-              <span className="small text-muted" style={{ fontSize: '11px' }}>{r.nome?.split(' ')[0]}</span>
+              <span className="text-muted d-block mt-1" style={{ fontSize: '11px' }}>{r.nome?.split(' ')[0]}</span>
             </div>
           ))}
         </div>
       </div>
 
+      {/* CARD RUNNER SELEZIONATO (Storia cliccata) */}
       {runnerSelezionato && (
         <div className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1060 }}>
           <div className="card border-0 shadow-lg p-4 text-center" style={{ width: '300px', borderRadius: '20px' }}>
@@ -292,7 +355,10 @@ export default function Bacheca({ utente, zonaId, onLogout }: { utente: any, zon
         </div>
       )}
 
+      {/* CONTENUTO BACHECA (Modulo + Uscite) */}
       <div className="container pb-5" style={{ maxWidth: '800px' }}>
+        
+        {/* Modulo Crea Uscita */}
         <div className="card border-0 shadow-sm p-4 mb-4" style={{ borderRadius: '15px' }}>
           <h4 className="fw-bold mb-3">Organizza una corsa</h4>
           <div className="row g-3">
@@ -313,6 +379,7 @@ export default function Bacheca({ utente, zonaId, onLogout }: { utente: any, zon
           </div>
         </div>
 
+        {/* Lista Uscite */}
         <h5 className="fw-bold mb-3">Prossime corse nella tua zona</h5>
         {uscite.length === 0 ? (
           <div className="text-center p-5 bg-white rounded shadow-sm"><p className="text-muted mb-0">Nessuna uscita in programma. Sii il primo a organizzarne una!</p></div>
