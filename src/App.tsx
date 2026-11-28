@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import Bacheca from './Bacheca'
+import MainApp from './MainApp'
 
 function App() {
   const [email, setEmail] = useState('')
@@ -105,8 +106,14 @@ function App() {
     setUser(null) // Resetta l'utente loggato
     setProfiloCompleto(false) // Torna alla schermata di login
   }
-    if (profiloCompleto) {
-    return <Bacheca utente={user} zonaId={zonaScelta} onLogout={handleLogout} />
+     // Sostituisci questo:
+  // if (profiloCompleto) {
+  //   return <Bacheca utente={user} zonaId={zonaScelta} onLogout={handleLogout} />
+  // }
+
+  // Con questo:
+  if (profiloCompleto) {
+    return <MainApp utente={user} onLogout={handleLogout} />
   }
   const salvaProfilo = async () => {
     if (!zonaScelta) return setMsg('Seleziona una zona')
