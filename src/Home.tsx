@@ -4,6 +4,7 @@ import { supabase } from './supabaseClient'
 export default function Home({ utente }: { utente: any }) {
   const [posts, setPosts] = useState<any[]>([])
   const [storie, setStorie] = useState<any[]>([])
+  const [uscite, setUscite] = useState<any[]>([])
   
   const [nomeUtente, setNomeUtente] = useState('Tu')
   const [avatarUrl, setAvatarUrl] = useState('')
@@ -24,6 +25,11 @@ export default function Home({ utente }: { utente: any }) {
     supabase.from('profili').select('*').neq('id', utente.id).limit(5).then(({ data }) => {
       if (data) setStorie(data)
     })
+
+    // 4. Prendi le uscite di gruppo (per il mockup)
+    supabase.from('uscite').select('*, partecipanti(utente_id), profili(nome)').limit(3).then(({ data }) => {
+      if (data) setUscite(data)
+    })
   }, [])
 
   const caricaPost = async () => {
@@ -38,73 +44,121 @@ export default function Home({ utente }: { utente: any }) {
   return (
     <div style={{ maxWidth: '500px', margin: '0 auto', backgroundColor: 'white', minHeight: '100vh', paddingBottom: '70px' }}>
       
-      {/* HEADER */}
-      <div className="d-flex justify-content-between align-items-center p-3 border-bottom sticky-top bg-white">
-        <h4 className="fw-bold mb-0">Runner<span style={{ color: '#ff5722' }}>Social.it</span></h4>
-        <div className="d-flex gap-3 fs-5">
-          <span>🔔</span>
-          <span>💬</span>
+      {/* HEADER STILE MOCKUP (PDF) */}
+      <div className="p-3 border-bottom bg-white">
+        <div className="d-flex justify-content-between align-items-center mb-1">
+          <h3 className="fw-bold mb-0" style={{ letterSpacing: '-0.5px' }}>
+            Runner<span style={{ color: '#ff5722' }}>Social.it</span>
+          </h3>
+          <div className="d-flex gap-3 fs-4">
+            <span style={{ cursor: 'pointer' }}>🔔</span>
+            <span style={{ cursor: 'pointer' }}>💬</span>
+          </div>
+        </div>
+        <div className="d-flex align-items-center gap-1 small text-muted fw-semibold">
+          <span style={{ color: '#ff5722' }}>📍</span>
+          <span>Vicino a te • 5 km</span>
         </div>
       </div>
 
-      {/* BARRA STORIE */}
+      {/* BARRA STORIE (STILE MOCKUP) */}
       <div className="d-flex gap-3 p-3 overflow-auto border-bottom" style={{ whiteSpace: 'nowrap' }}>
-        <div className="text-center" style={{ width: '70px' }}>
+        {/* La tua storia */}
+        <div className="text-center" style={{ width: '75px' }}>
           <div className="position-relative d-inline-block">
-            <img src={avatarUrl || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'} className="rounded-circle" style={{ width: '65px', height: '65px', objectFit: 'cover', border: '2px solid #ddd', padding: '2px' }} />
-            <span className="position-absolute bottom-0 end-0 bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style={{ width: '22px', height: '22px', color: '#ff5722', fontWeight: 'bold', border: '1px solid #ddd' }}>+</span>
+            <img 
+              src={avatarUrl || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'} 
+              className="rounded-circle" 
+              style={{ width: '70px', height: '70px', objectFit: 'cover', border: '2px solid #ff5722', padding: '2px' }} 
+            />
+            <span className="position-absolute bottom-0 end-0 bg-white rounded-circle d-flex align-items-center justify-content-center shadow" style={{ width: '24px', height: '24px', color: '#ff5722', fontWeight: 'bold', border: '1px solid #ddd', fontSize: '16px' }}>+</span>
           </div>
-          <small className="d-block text-truncate mt-1" style={{ fontSize: '11px' }}>La tua storia</small>
+          <small className="d-block text-truncate mt-1" style={{ fontSize: '12px', color: '#333' }}>La tua storia</small>
         </div>
 
+        {/* Storie degli amici */}
         {storie.map((s) => (
-          <div key={s.id} className="text-center" style={{ width: '70px' }}>
-            <div className="rounded-circle p-1" style={{ border: '2px solid #ff5722' }}>
-              <img src={s.avatar_url || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'} className="rounded-circle" style={{ width: '58px', height: '58px', objectFit: 'cover' }} />
+          <div key={s.id} className="text-center" style={{ width: '75px' }}>
+            <div className="rounded-circle p-1" style={{ border: '2px solid #ff5722', display: 'inline-block' }}>
+              <img 
+                src={s.avatar_url || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'} 
+                className="rounded-circle" 
+                style={{ width: '64px', height: '64px', objectFit: 'cover' }} 
+              />
             </div>
-            <small className="d-block text-truncate mt-1" style={{ fontSize: '11px' }}>{s.nome?.split(' ')[0]}</small>
+            <small className="d-block text-truncate mt-1" style={{ fontSize: '12px', color: '#333' }}>{s.nome?.split(' ')[0]}</small>
           </div>
         ))}
       </div>
 
       {/* FEED */}
       <div className="p-3">
-        {posts.length === 0 ? (
-          <p className="text-center text-muted mt-4">Nessun post ancora. Inizia tu a condividere una corsa!</p>
-        ) : (
-          posts.map((post) => (
-            <div key={post.id} className="card border-0 border-bottom rounded-0 mb-3 pb-3">
-              <div className="d-flex align-items-center justify-content-between mb-2">
-                <div className="d-flex align-items-center gap-2">
-                  <img src={post.profili?.avatar_url || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'} className="rounded-circle" style={{ width: '35px', height: '35px', objectFit: 'cover' }} />
-                  <div>
-                    <h6 className="mb-0 fw-bold">{post.profili?.nome || 'Runner'}</h6>
-                    <small className="text-muted" style={{ fontSize: '11px' }}>Oggi alle {new Date(post.creato_il).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}</small>
-                  </div>
-                </div>
-                <span className="fs-4 text-muted">...</span>
-              </div>
-
-              {post.immagine_url && (
-                <img src={post.immagine_url} className="w-100 rounded-3 mb-2" style={{ objectFit: 'cover', maxHeight: '400px' }} />
-              )}
-
-              <div className="bg-light p-2 rounded-3 mb-2 d-flex justify-content-between align-items-center">
+        
+        {/* 1. I POST (stile Strava/Mockup) */}
+        {posts.map((post) => (
+          <div key={post.id} className="card border-0 border-bottom rounded-0 mb-3 pb-3">
+            <div className="d-flex align-items-center justify-content-between mb-2">
+              <div className="d-flex align-items-center gap-2">
+                <img src={post.profili?.avatar_url || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'} className="rounded-circle" style={{ width: '40px', height: '40px', objectFit: 'cover' }} />
                 <div>
-                  <div className="fw-bold fs-6">{post.testo || 'Allenamento completato'}</div>
-                  {post.distanza_km && <div className="text-muted small">{post.distanza_km} km • ritmo {post.ritmo}</div>}
+                  <h6 className="mb-0 fw-bold">{post.profili?.nome || 'Runner'}</h6>
+                  <small className="text-muted" style={{ fontSize: '11px' }}>Oggi alle {new Date(post.creato_il).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })} • 5 km da te</small>
                 </div>
-                <span className="badge bg-white text-dark border">👟 {post.attivita}</span>
               </div>
-
-              <div className="d-flex gap-3 fs-5 mb-2">
-                <span style={{ color: '#ff5722' }}>❤️ {post.like?.length || 0}</span>
-                <span>💬</span>
-                <span className="ms-auto">✈️</span>
-              </div>
+              <span className="fs-4 text-muted" style={{ cursor: 'pointer' }}>...</span>
             </div>
-          ))
+
+            {post.immagine_url && (
+              <img src={post.immagine_url} className="w-100 rounded-3 mb-2" style={{ objectFit: 'cover', maxHeight: '350px' }} />
+            )}
+
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <div className="fw-bold fs-6">{post.testo || 'Allenamento completato!'}</div>
+                {post.distanza_km && <div className="text-muted small">{post.distanza_km} km • ritmo {post.ritmo}</div>}
+              </div>
+              <span className="badge" style={{ backgroundColor: '#fff3e0', color: '#e65100' }}>👟 {post.attivita}</span>
+            </div>
+
+            <div className="d-flex gap-3 fs-5 mb-1">
+              <span style={{ color: '#ff5722', cursor: 'pointer' }}>❤️ {post.like?.length || 0}</span>
+              <span style={{ cursor: 'pointer' }}>💬 5</span>
+              <span className="ms-auto" style={{ cursor: 'pointer' }}>✈️</span>
+            </div>
+          </div>
+        ))}
+
+        {/* 2. LE USCITE DI GRUPPO (stile Card Arancione Mockup) */}
+        {uscite.map((u) => (
+          <div key={u.id} className="card border-0 shadow-sm mb-3 p-3" style={{ borderRadius: '15px' }}>
+            <div className="d-flex align-items-center gap-3 mb-2">
+              <div className="rounded-circle d-flex justify-content-center align-items-center" style={{ width: '45px', height: '45px', backgroundColor: '#ff5722', color: 'white' }}>
+                <span className="fs-4">🏃</span>
+              </div>
+              <div>
+                <h6 className="fw-bold mb-0">{u.titolo} <span className="badge bg-light text-dark border ms-1" style={{ fontSize: '10px' }}>Aperto</span></h6>
+              </div>
+              <span className="ms-auto fs-4 text-muted">...</span>
+            </div>
+            
+            <div className="small text-muted mb-1">📅 {new Date(u.data_ora).toLocaleString('it-IT', { weekday: 'long', hour: '2-digit', minute: '2-digit' })}</div>
+            <div className="small text-muted mb-3">📍 {u.punto_ritrovo}</div>
+            <div className="small fw-bold mb-2">👥 {u.partecipanti?.length || 0} partecipanti</div>
+            
+            <button className="btn w-100 fw-bold text-white mb-2" style={{ backgroundColor: '#ff5722', borderRadius: '8px' }}>Partecipa</button>
+            
+            <div className="bg-light rounded p-2 d-flex justify-content-between align-items-center" style={{ cursor: 'pointer' }}>
+              <span className="small fw-bold text-dark">💬 Chat dell'evento</span>
+              <span className="text-muted">›</span>
+            </div>
+          </div>
+        ))}
+
+        {/* Se non c'è nulla da mostrare */}
+        {posts.length === 0 && uscite.length === 0 && (
+          <p className="text-center text-muted mt-4">Nessun post o uscita. Inizia tu a condividere qualcosa!</p>
         )}
+
       </div>
     </div>
   )
