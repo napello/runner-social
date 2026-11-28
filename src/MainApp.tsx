@@ -1,26 +1,22 @@
 import { useState } from 'react'
-
-// Importa le future schermate (le creeremo dopo)
-// import HomeFeed from './HomeFeed'
-// import Cerca from './Cerca'
-// import Profilo from './Profilo'
+import Home from './Home' // <-- Importa la nuova schermata
 
 export default function MainApp({ utente, onLogout }: { utente: any, onLogout: () => void }) {
   const [tabAttiva, setTabAttiva] = useState('home')
 
-  // Funzione per renderizzare la schermata corretta
   const renderSchermata = () => {
     switch (tabAttiva) {
       case 'home':
-        return <div className="p-4 text-center text-muted">Qui ci sarà il Feed (Foto e Post)</div>
+        return <Home utente={utente} /> // <-- Mostra il Feed
       case 'cerca':
-        return <div className="p-4 text-center text-muted">Qui ci sarà la Ricerca Utenti</div>
+        return <div className="p-4 text-center text-muted">Qui ci sarà la Ricerca</div>
       case 'profilo':
-        return <div className="p-4 text-center text-muted">Qui ci sarà il Profilo (Foto, Follower, Post)</div>
+        return <div className="p-4 text-center text-muted">Qui ci sarà il Profilo</div>
       default:
-        return <div className="p-4 text-center text-muted">In arrivo...</div>
+        return <Home utente={utente} />
     }
   }
+  // ... il resto del codice della navbar rimane uguale
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#fafafa', paddingBottom: '70px' }}>
